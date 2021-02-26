@@ -1,0 +1,102 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - develop
+      - master
+      - refs/tags/*
+
+resources:
+- repo: self
+
+pool:
+  vmImage: ubuntu-20.04
+
+variables:
+- name: 'gradleWrapperFile'
+  value: 'gradlew'
+- name: 'artifactPublishURL'
+  value: 'https://pkgs.dev.azure.com/Lumedic/844bdbc0-4fc1-40a0-b67a-d274021ce496/_packaging/lce/maven/v1'
+- name: 'artifactGroup'
+  value: 'org.lumedic.com'
+- name: 'artifactName'
+  value: 'ssi-mobile-sdk'
+- name: 'artifactVersion'
+  value: '0.0.1'
+
+stages:
+- stage: build
+  displayName: 'build'
+  jobs:  
+  - job: buildJar
+    steps:
+    - task: Gradle@2
+      displayName: 'build jar'
+      inputs:
+        gradleWrapperFile: '$(gradleWrapperFile)'
+        tasks: 'clean jvmJar'
+    - task: CopyFiles@2
+      displayName: 'copy jar files'
+      inputs:
+        contents: 'build/libs/kotlin-multiplatform-agent-jvm*.jar'
+        targetFolder: '$(build.artifactStagingDirectory)'
+        flattenFolders: true
+    - task: PublishBuildArtifacts@1
+      displayName: 'publish artifacts'
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+  - job: buildAar
+    steps:
+    - task: Gradle@2
+      displayName: 'build android aar'
+      inputs:
+        gradleWrapperFile: '$(gradleWrapperFile)'
+        tasks: 'clean build -x lint'
+    - task: CopyFiles@2
+      displayName: 'copy aar files'
+      inputs:
+        contents: '**/*.aar'
+        targetFolder: '$(Build.ArtifactStagingDirectory)'
+        flattenFolders: true
+    - task: PublishBuildArtifacts@1
+      displayName: 'publish artifacts'
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+
+- stage: publish
+  dependsOn: build  
+  displayName: 'publish'
+  jobs:
+  - job: publishPackage
+    steps:
+    - checkout: none
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'all'
+        downloadPath: '$(Pipeline.Workspace)' 
+    - task: MavenAuthenticate@0
+      inputs:
+        artifactsFeeds: 'lce'
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          mvn deploy:deploy-file \
+            -Dpackaging="jar" \
+            -DrepositoryId="lce" \
+            -Durl="$(artifactPublishURL)" \
+            -DgroupId="$(artifactGroup)" \
+            -DartifactId="$(artifactName)-jvm" \
+            -Dversion="$(artifactVersion)" \
+            -Dfile="$(Pipeline.Workspace)/drop/kotlin-multiplatform-agent-jvm-1.0-SNAPSHOT.jar"
+
+          mvn deploy:deploy-file \
+            -Dpackaging="jar" \
+            -DrepositoryId="lce" \
+            -Durl="$(artifactPublishURL)" \
+            -DgroupId="$(artifactGroup)" \
+            -DartifactId="$(artifactName)-android" \
+            -Dversion="$(artifactVersion)" \
+            -Dfile="$(Pipeline.Workspace)/drop/kotlin-multiplatform-agent-release.aar"
