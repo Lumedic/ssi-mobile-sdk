@@ -23,7 +23,7 @@ variables:
 - name: 'artifactName'
   value: 'ssi-mobile-sdk'
 - name: 'artifactVersion'
-  value: '0.0.1'
+  value: 1.$(Build.BuildNumber)
 
 stages:
 - stage: build
