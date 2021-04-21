@@ -11,6 +11,8 @@ import com.dxc.ssi.agent.model.Connection
 import com.dxc.ssi.agent.utils.PlatformInit
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.withContext
 
 class SsiAgentApiImpl(
     private val transport: Transport,
@@ -29,8 +31,15 @@ class SsiAgentApiImpl(
         platformInit.init()
         walletConnector.walletHolder.openOrCreateWallet()
 
+
 //TODO: design proper concurrency there
-        GlobalScope.launch { messageListener.listen() }
+        GlobalScope.launch {
+            withContext(newSingleThreadContext("Listener thread")) {
+                messageListener.listen()
+            }
+        }
+
+
 
     }
 

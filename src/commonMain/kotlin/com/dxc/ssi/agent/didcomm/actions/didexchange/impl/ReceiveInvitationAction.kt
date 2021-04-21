@@ -50,12 +50,16 @@ class ReceiveInvitationAction(
             endpoint = endpoint
         )
 
+        println("Before storing connection")
 
         //TODO: before storing record check if there were record with the same invitation and reuse it
         //TODO: think about not storing connection object at all untill callback result is received
         walletConnector.walletHolder.storeConnectionRecord(connection)
-        val callbackResult = connectionInitiatorController.onInvitationReceived(connection, endpoint, invitation)
 
+        println("After storing connection")
+
+        val callbackResult = connectionInitiatorController.onInvitationReceived(connection, endpoint, invitation)
+        println("After executing callback")
         if (callbackResult.canProceedFurther) {
 
             //form request

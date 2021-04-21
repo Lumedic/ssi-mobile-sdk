@@ -59,6 +59,7 @@ actual class WalletRecord {
                     callback
                 )
 
+                println("Wallet.get -> before waiting for callback result")
                 val recordData = callbackHandler.waitForCallbackResult(commandHandle) as GetWalletRecordCallbackResult
 
 

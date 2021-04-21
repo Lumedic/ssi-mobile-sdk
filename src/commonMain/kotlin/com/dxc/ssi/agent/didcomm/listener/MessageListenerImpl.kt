@@ -8,6 +8,7 @@ import com.dxc.ssi.agent.didcomm.router.MessageRouter
 import com.dxc.ssi.agent.didcomm.router.MessageRouterImpl
 import com.dxc.ssi.agent.model.messages.Message
 import com.dxc.ssi.agent.model.messages.ReceivedUnpackedMessage
+import com.dxc.ssi.agent.transport.Sleeper
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
@@ -25,13 +26,14 @@ class MessageListenerImpl(
         isShutdown = true
     }
 
-    override fun listen() {
+    override suspend fun listen() {
 
         println("Started listener")
 
         while (!isShutdown) {
 
             println("Checking for new messages")
+
 
             val receivedMessage = transport.receiveNextMessage()
 

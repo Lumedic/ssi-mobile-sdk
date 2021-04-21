@@ -45,8 +45,9 @@ open class IndyWalletHolder : WalletHolder {
 
         //TODO: check if we need to check wallet health status before using it
 
+        println("In storeConnectionRecord")
         val existingConnection = getConnectionRecordById(connection.id)
-
+        println("Existing connection = $existingConnection")
         if (existingConnection == null) {
 
             val value = connection.toJson()
@@ -79,9 +80,10 @@ open class IndyWalletHolder : WalletHolder {
         *
         * */
 
-
+        println("In getConnectionRecordById")
         //TODO: find out better solution of looking up for connection
         return try {
+
             val retrievedValue = WalletRecord.get(wallet!!, type, connectionId, options)
             Connection.fromJson(extractValue(retrievedValue))
         } catch(e: WalletItemNotFoundException) {

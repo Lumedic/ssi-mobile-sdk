@@ -11,6 +11,7 @@ import com.dxc.ssi.agent.model.Connection
 import com.dxc.ssi.agent.model.messages.Message
 import com.dxc.ssi.agent.model.messages.MessageEnvelop
 import com.dxc.ssi.agent.model.messages.ReceivedUnpackedMessage
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -70,7 +71,8 @@ class SendTrustPingAction(
         *
         * */
 
-        val receivedMessage = transport.receiveNextMessage()
+
+        val receivedMessage =  transport.receiveNextMessage()
 
         val unpackedMessage = walletConnector.walletHolder.unPackMessage(Message(receivedMessage.payload))
 

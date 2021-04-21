@@ -1,4 +1,6 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 val serializationVersion: String = "1.0.1"
 val indyVersion: String = "1.16.0"
 val ktorVersion: String = "1.5.1"
@@ -59,6 +61,20 @@ kotlin {
         summary = "Kotlin sample project with CocoaPods dependencies"
         homepage = "https://github.com/Kotlin/kotlin-with-cocoapods-sample"
         ios.deploymentTarget = "13.5"
+        osx.deploymentTarget = "10.10"
+
+      // pod("jetfire")
+
+      //  pod("mokoSocketIo")
+
+      //  pod("Starscream") {
+     //       version = "~> 4.0.0"
+          //  moduleName = "Starscream"
+
+            //  source = git("https://github.com/CocoaPods/Specs.git") {
+            //  tag = "4.0.0"
+            // }
+     //   }
     }
 
     val hostOs = System.getProperty("os.name")
@@ -76,9 +92,13 @@ kotlin {
                 implementation("io.ktor:ktor-utils:$ktorVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxCourutinesVersion")
                 implementation ("co.touchlab:stately-iso-collections:1.1.4-a1")
+                implementation ("co.touchlab:stately-isolate:1.1.4-a1")
+                implementation ("co.touchlab:stately-common:1.1.4")
                 implementation ("com.benasher44:uuid:$uuidVersion")
                 //TODO: check why jdk dependency is added in common module
                 implementation(kotlin("stdlib-jdk8"))
+
+              //  implementation("dev.icerock.moko:socket-io:0.2.1")
 
             }
         }

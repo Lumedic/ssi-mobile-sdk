@@ -1,10 +1,28 @@
 package com.dxc.ssi.agent.transport
 
 import com.dxc.ssi.agent.model.messages.MessageEnvelop
+import co.touchlab.stately.isFrozen
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import co.touchlab.stately.collections.IsoMutableList
 
 //Common
-class AppSocket(url: String, incomingMessagesQueue: MutableList<MessageEnvelop>) {
+//TODO: replace with CompletableDeferred?
+//TODO: move to separate file
+class SocketListenerLoosingAdapter(
+    val socketOpenedChannel: Channel<Unit> = Channel(),
+    val socketReceivedMessageChannel: Channel<String> = Channel(),
+    val socketFailureChannel: Channel<Throwable> = Channel()
+)
+
+class AppSocket(url: String, incomingMessagesQueue: IsoMutableList<MessageEnvelop>) {
     private val ws = PlatformSocket(url)
+
+    private val socketListenerLoosingAdapter = SocketListenerLoosingAdapter()
+
+
+    // private val isolatedWs = IsolateState {}
+
     var socketError: Throwable? = null
         private set
     var currentState: State = State.CLOSED
@@ -26,15 +44,30 @@ class AppSocket(url: String, incomingMessagesQueue: MutableList<MessageEnvelop>)
         }
         socketError = null
         currentState = State.CONNECTING
-        ws.openSocket(socketListener)
 
-        while (currentState == State.CONNECTING) {
-            Sleeper().sleep(100)
+
+        //TODO: refactor this to have cleaner code, introduce single listen fun combining the funs above
+        //TODO: introduce liseners for other types of events
+        listenForMessages()
+        listenForFailures()
+
+        ws.openSocket(socketListenerLoosingAdapter)
+        println("Before running blocking")
+        runBlocking {
+            socketListenerLoosingAdapter.socketOpenedChannel.receive()
+            socketListener.onOpen()
+            println("After socketListener.onOpen")
         }
+
+        println("After running blocking")
+        //  while (currentState == State.CONNECTING) {
+        //    Sleeper().sleep(100)
+        //}
 
         if (currentState != State.CONNECTED)
             throw throw IllegalStateException("Could not be opened")
 
+        println("Exiting AppSocket.connect")
     }
 
     fun disconnect() {
@@ -51,9 +84,44 @@ class AppSocket(url: String, incomingMessagesQueue: MutableList<MessageEnvelop>)
         println("Sent message to websocket")
     }
 
-    private val socketListener:PlatformSocketListener = object : PlatformSocketListener {
+    private fun listenForMessages() {
+        println("IN listen function")
+        GlobalScope.launch {
+            //TODO: change to smth like while CONNECTED
+        //    withContext(newSingleThreadContext("Thread 2")) {
+
+                val receivedMessage = socketListenerLoosingAdapter.socketReceivedMessageChannel.receive()
+                socketListener.onMessage(receivedMessage)
+
+                listenForMessages()
+       //     }
+
+
+        }
+    }
+
+
+    private fun listenForFailures() {
+
+        GlobalScope.launch {
+            //TODO: change to smth like while CONNECTED
+       //     withContext(newSingleThreadContext("Thread 3")) {
+
+                val receivedThrowable = socketListenerLoosingAdapter.socketFailureChannel.receive()
+                socketListener.onFailure(receivedThrowable)
+
+                listenForFailures()
+      //      }
+
+        }
+
+    }
+
+    private val socketListener: PlatformSocketListener = object : PlatformSocketListener {
         override fun onOpen() {
             println("Opened socket")
+            println("is PlatformSocketListener frozen = ${this.isFrozen}")
+
             currentState = State.CONNECTED
         }
 
