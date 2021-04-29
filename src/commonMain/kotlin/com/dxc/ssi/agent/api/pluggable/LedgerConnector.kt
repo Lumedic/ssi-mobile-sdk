@@ -210,5 +210,5 @@ interface LedgerConnector {
       ): DataUsedInProofJson
   */
 
-    fun init()
+    suspend fun init()
 }

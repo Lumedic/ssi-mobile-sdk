@@ -23,7 +23,7 @@ class IndyLedgerConnector(val indyLedgerConnectorConfiguration: IndyLedgerConnec
     override var did: String = ""
     private lateinit var pool: Pool
 
-    override fun init() {
+    override suspend fun init() {
         //TODO: think where to store and initialize pool variable
 
         pool = if (indyLedgerConnectorConfiguration.genesisMode == IndyLedgerConnectorConfiguration.GenesisMode.FILE) {
